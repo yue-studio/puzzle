@@ -3,6 +3,9 @@
 putting the puzzle pieces on a board
 
 3 different implementations:
-puzzle.py: regular brute force
-bfs.py: breath-first search
-dfs.py: depth-first search
+
+  puzzle.py: regular brute force
+
+  bfs.py: breath-first search
+
+  dfs.py: depth-first search
