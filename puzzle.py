@@ -1,6 +1,25 @@
+"""
+@author: Kelvin Yue
+
+History:
+    1. v0.0, Kelvin, 2024-12: original
+    2. v1.0, Ham Nguyen, 2025-01-24: add TQDM to show progress
+
+% python ./puzzle.py
+Permutation Search:  96%|█████████████████████████████████████████████████████████▉  | 2026480/2100000 [1:39:49<03:49, 319.69 permutations/s]
+board is filled
+*** Solution Found ***
+Permutation Search:  97%|█████████████████████████████████████████████████████████▉  | 2026855/2100000 [1:39:51<03:36, 338.32 permutations/s]
+Execution time: 5991.0269 seconds
+
+"""
+
 import numpy as np
 import time
 from itertools import permutations
+from tqdm import tqdm
+
+__VERSION__ = "1.0"
 
 # Define the board dimensions
 BOARD_HEIGHT = 7 
@@ -89,7 +108,7 @@ pieces = [
 ]
 
 # Function to check if a piece arrangement is valid
-def is_valid_arrangement(arrangement):
+def is_valid_arrangement(arrangement, pbar):
     """
     Check if the arrangement satisfies the puzzle constraints:
     - Pieces fit within the board.
@@ -129,23 +148,28 @@ def is_valid_arrangement(arrangement):
                     # print("Board :")
                     # print(repr(board))
 
+    pbar.update(1)
+
     if np.all(board):
-       print("board is filled")
-       print(repr(board))
+       print("\nboard is filled")
+       #print(repr(board))
        return True
     else:
-       print(repr(board))
+       #print(repr(board))
        return False
 
 start_time = time.time()
 
-found = False 
-# Try all permutations of the pieces
-for perm in permutations(pieces):
-    if (is_valid_arrangement(perm)):
-       print("*** Solution Found ***")
-       found = True
-       break
+found = False
+
+n = int(2.1e6)  # Adjust the number as needed
+with tqdm(total=n, desc="Permutation Search", mininterval=5, unit=' permutations') as pbar:
+    # Try all permutations of the pieces
+    for perm in permutations(pieces):
+        if (is_valid_arrangement(perm, pbar)):
+           print("*** Solution Found ***")
+           found = True
+           break
 
 if not found:
        print("No solution found")

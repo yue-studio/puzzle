@@ -1,5 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+@author: Kelvin Yue
+
+History:
+    1. v0.0, Kelvin, 2024-12: original
+    2. v1.0, Ham Nguyen, 2025-01-23: add TQDM to show progress
+
+$ python ./dfs.py
+Depth-First Search: 100%|████████████████████████████████████████████████████████████▋| 120490232/121000000 [5:21:43<01:21, 6241.91 trials/s]
+Execution time: 19303.4391 seconds
+
+"""
+
 import numpy as np
 import time
+from tqdm import tqdm
+
+__VERSION__ = "1.0"
 
 # Define the board dimensions
 BOARD_HEIGHT = 7
@@ -74,7 +91,7 @@ pieces = [
     PuzzlePiece("Piece9", [[9, 9, 9, 9, 9, 9, 9]]),
 ]
 
-def dfs(board, pieces, piece_index):
+def dfs(board, pieces, piece_index, pbar):
     """Perform DFS to find a valid arrangement."""
     if piece_index == len(pieces):
         # All pieces placed successfully
@@ -82,12 +99,16 @@ def dfs(board, pieces, piece_index):
 
     piece = pieces[piece_index]
 
+    # print(board)
+
     for orientation in piece.orientations:
         for row in range(BOARD_HEIGHT):
             for col in range(BOARD_WIDTH):
                 if piece.place_on_board(board, orientation, row, col):
+                    pbar.update(1)
                     # Recursive step
-                    if dfs(board, pieces, piece_index + 1):
+                    if dfs(board, pieces, piece_index + 1, pbar):
+                        print(board)
                         return True
 
                     # Backtrack
@@ -102,12 +123,14 @@ start_time = time.time()
 # Initialize the board
 board = np.zeros((BOARD_HEIGHT, BOARD_WIDTH), dtype=int)
 
-# Start DFS
-if dfs(board, pieces, 0):
-    print("*** Solution Found ***")
-    print(board)
-else:
-    print("No solution found")
+n = int(1.21e8)  # Adjust the number as needed
+with tqdm(total=n, desc="Depth-First Search", mininterval=10, unit=' trials') as pbar:
+    # Start DFS
+    if dfs(board, pieces, 0, pbar):
+        print("*** Solution Found ***")
+        print(board)
+    else:
+        print("No solution found")
 
 # Record the end time
 end_time = time.time()
