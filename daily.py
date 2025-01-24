@@ -77,6 +77,38 @@ pieces = [
     PuzzlePiece("Piece10", [[10, 10, 0], [0, 10, 0], [0, 10, 10]]),  # big Z-shaped piece
 ]
 
+# function to find the smallest connected cells
+def min_connected_cells(matrix):
+    rows, cols = matrix.shape
+    visited = np.zeros((rows, cols), dtype=bool)
+
+    def is_valid(i, j):
+        return 0 <= i < rows and 0 <= j < cols and not visited[i, j] and matrix[i, j] == 0
+
+    def dfs(i, j):
+        stack = [(i, j)]
+        connected_cells = 0
+        while stack:
+            x, y = stack.pop()
+            if not visited[x, y]:
+                visited[x, y] = True
+                connected_cells += 1
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    if is_valid(x + dx, y + dy):
+                        stack.append((x + dx, y + dy))
+        return connected_cells
+
+    min_connected_cells = float('inf')
+    found = False
+    for i in range(rows):
+        for j in range(cols):
+            if is_valid(i, j):
+                size = dfs(i, j)
+                min_connected_cells = min(min_connected_cells, size)
+                found = True
+
+    return min_connected_cells if found else 0
+
 # Function to check if a piece arrangement is valid
 def is_valid_arrangement(arrangement):
     """
@@ -120,12 +152,23 @@ def is_valid_arrangement(arrangement):
                 for col in range(BOARD_WIDTH - shape_width + 1):
                     # Check for overlap
                     sub_board = board[row:row + shape_height, col:col + shape_width]
-                    # Create a mask where matrix1 has zeros
+                    # Create a mask where matrix has zeros
                     board_mask = (sub_board != 0)
                     shape_mask = (shape != 0)
 
+                    #print("mask: ")
+                    #print(board_mask)
+                    #print(shape_mask)
+
                     if np.any(board_mask & shape_mask):
+                      # print("skipping")
                       continue
+
+                    min_size = min_connected_cells(sub_board)
+
+                    if (min_size < 5):
+                        # print("skipping")
+                        continue
 
                     # Place the piece on the board
                     board[row:row + shape_height, col:col + shape_width] += shape
@@ -135,11 +178,11 @@ def is_valid_arrangement(arrangement):
                     # print(repr(board))
 
     if np.all(board):
-       #print("board is filled")
-       #print(repr(board))
+       print("board is filled")
+       print(repr(board))
        return True
     else:
-       #print(repr(board))
+       # print(repr(board))
        return False
 
 start_time = time.time()
