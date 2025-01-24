@@ -9,3 +9,5 @@ putting the puzzle pieces on a board
   bfs.py: breath-first search
 
   dfs.py: depth-first search
+
+  daily.py: daily puzzle that show the day
