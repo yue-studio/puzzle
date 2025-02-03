@@ -1,6 +1,8 @@
 import numpy as np
 import time
 from itertools import permutations
+from multiprocessing import Pool
+import os
 
 # Define the board dimensions
 BOARD_HEIGHT = 8
@@ -64,24 +66,42 @@ def min_connected_cells(matrix):
                     stack.append((nx, ny))
         return count
 
+    def bfs(start_i, start_j):
+        queue = [(start_i, start_j)]
+        visited[start_i, start_j] = True
+        count = 1
+
+        while queue:
+            i, j = queue.pop(0)
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = i + dx, j + dy
+                if 0 <= ni < rows and 0 <= nj < cols and not visited[ni, nj] and matrix[ni, nj] == 0:
+                    visited[ni, nj] = True
+                    queue.append((ni, nj))
+                    count += 1
+
+        return count
+
     min_size = float('inf')
     for i in range(rows):
         for j in range(cols):
             if matrix[i, j] == 0 and not visited[i, j]:
-                min_size = min(min_size, dfs(i, j))
+                min_size = min(min_size, bfs(i, j))
 
     return min_size if min_size != float('inf') else 0
-
 
 def is_valid_arrangement(arrangement):
     """Checks if the puzzle arrangement is valid on the board."""
     board = base_board.copy()
+    pid = os.getpid()
 
     for piece in arrangement:
         placed = False
         for orientation in piece.orientations:
             shape = np.array(orientation)
             shape_height, shape_width = shape.shape
+
+            print("\n", pid, "Trying: ", shape,"\n")
 
             if placed:
                 break  # Skip other orientations once placed
@@ -101,7 +121,7 @@ def is_valid_arrangement(arrangement):
                     # Place the piece
                     board[row:row + shape_height, col:col + shape_width] += shape
                     placed = True
-                    print(board)
+                    print("\n", pid,"\n", board,'\n')
                     break
 
         if not placed:  
@@ -111,18 +131,34 @@ def is_valid_arrangement(arrangement):
 
 
 # Main Execution
-start_time = time.time()
-found = False
+#start_time = time.time()
+#found = False
 
-for perm in permutations(pieces):
-    if is_valid_arrangement(perm):
-        print("*** Solution Found ***")
-        print(base_board)
-        found = True
-        break
+# for perm in permutations(pieces):
+#    if is_valid_arrangement(perm):
+#        print("*** Solution Found ***")
+#        print(base_board)
+#        found = True
+#        break
 
-if not found:
-    print("No solution found")
+#if not found:
+#    print("No solution found")
 
-print(f"Execution time: {time.time() - start_time:.4f} seconds")
+#print(f"Execution time: {time.time() - start_time:.4f} seconds")
 
+
+def check_permutation(perm):
+    return is_valid_arrangement(perm)
+
+if __name__ == "__main__":
+    start_time = time.time()
+    with Pool(processes=4) as pool:  # Adjust based on CPU cores
+        results = pool.map(check_permutation, permutations(pieces))
+        
+        if any(results):
+            print("*** Solution Found ***")
+        else:
+            print("No solution found")
+
+
+    print(f"Execution time: {time.time() - start_time:.4f} seconds")
