@@ -1,12 +1,30 @@
 import numpy as np
 import time
 from itertools import permutations
-from multiprocessing import Pool
+#from multiprocessing import Pool
+import multiprocessing
 import os
+import logging
 
 # Define the board dimensions
 BOARD_HEIGHT = 8
-BOARD_WIDTH = 7
+BOARD_WIDTH = 7 
+
+# Configure global logging
+def setup_logger():
+    logger = multiprocessing.get_logger()
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(processName)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    if not logger.hasHandlers():  # Prevent duplicate handlers
+        logger.addHandler(handler)
+
+def log_message(message):
+    logger = multiprocessing.get_logger()
+    logger.debug(message)
 
 class PuzzlePiece:
     def __init__(self, name, shape):
@@ -101,9 +119,10 @@ def is_valid_arrangement(arrangement):
             shape = np.array(orientation)
             shape_height, shape_width = shape.shape
 
-            print("\n", pid, "Trying: ", shape,"\n")
+            log_message(f"Trying:\n{shape}")
 
             if placed:
+                log_message(f"skipping shape used")
                 break  # Skip other orientations once placed
 
             for row in range(BOARD_HEIGHT - shape_height + 1):
@@ -116,13 +135,17 @@ def is_valid_arrangement(arrangement):
 
                     # Ensure the board doesn't form small isolated empty spaces
                     if min_connected_cells(sub_board) < 5:
+                        log_message(f"skipping small space")
                         continue  
 
                     # Place the piece
                     board[row:row + shape_height, col:col + shape_width] += shape
                     placed = True
-                    print("\n", pid,"\n", board,'\n')
+                    log_message(f"Current Board:\n{board}")
                     break
+ 
+                if placed:
+                   break
 
         if not placed:  
             return False  # If any piece couldn't be placed, arrangement is invalid
@@ -148,11 +171,14 @@ def is_valid_arrangement(arrangement):
 
 
 def check_permutation(perm):
+    setup_logger()  # Setup logging for multiprocessing
     return is_valid_arrangement(perm)
 
 if __name__ == "__main__":
+    setup_logger()  # Setup logging for multiprocessing
+
     start_time = time.time()
-    with Pool(processes=4) as pool:  # Adjust based on CPU cores
+    with multiprocessing.Pool(processes=4) as pool:  # Adjust based on CPU cores
         results = pool.map(check_permutation, permutations(pieces))
         
         if any(results):
